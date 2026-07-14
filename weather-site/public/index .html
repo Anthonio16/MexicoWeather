@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+<!-- 2026-07-13 Mon 21:48 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Proyecto ICCD332: City Weather APP - Ciudad de México</title>
+<meta name="author" content="Grupo 3" />
+<meta name="generator" content="Org Mode" />
+<link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css" />
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">Proyecto ICCD332: City Weather APP - Ciudad de México</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>&Iacute;ndice</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#orga8e2522">1. Navegación</a></li>
+<li><a href="#org4200c11">2. City Weather APP</a>
+<ul>
+<li><a href="#org5eda5fe">2.1. Estructura del proyecto</a></li>
+<li><a href="#org09053ef">2.2. Formulación del Problema</a></li>
+<li><a href="#org4dc4f47">2.3. Descripción del código</a>
+<ul>
+<li><a href="#orgc4b0859">2.3.1. Lectura del API</a></li>
+<li><a href="#orgdfb2ea2">2.3.2. Convertir JSON a columnas planas</a></li>
+<li><a href="#orga460824">2.3.3. Guardar el archivo csv</a></li>
+</ul>
+</li>
+<li><a href="#org6967e02">2.4. Script ejecutable sh</a></li>
+<li><a href="#orga322378">2.5. Configuración de Crontab</a></li>
+</ul>
+</li>
+<li><a href="#orgfa4e67e">3. Presentación de resultados</a>
+<ul>
+<li><a href="#orgc66a27e">3.1. Muestra Aleatoria de datos</a></li>
+<li><a href="#orgca87463">3.2. Gráfica Temperatura vs Tiempo</a></li>
+<li><a href="#org29e9b0b">3.3. Gráfica de Humedad con respecto al tiempo</a></li>
+<li><a href="#orgc4d6a3d">3.4. Opcional: Gráfica de interés (Presión atmosférica)</a></li>
+</ul>
+</li>
+<li><a href="#org7b8a0f5">4. Referencias</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orga8e2522" class="outline-2">
+<h2 id="orga8e2522"><span class="section-number-2">1.</span> Navegación</h2>
+<div class="outline-text-2" id="text-1">
+<ul class="org-ul">
+<li><a href="index.html">Página principal: City Weather APP</a></li>
+<li><a href="ieee754.html">Página 2: Representación IEEE 754</a></li>
+<li><a href="seguridad.html">Página 3: Análisis INEC - Robo a Domicilio</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org4200c11" class="outline-2">
+<h2 id="org4200c11"><span class="section-number-2">2.</span> City Weather APP</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Este es el proyecto de fin de semestre en donde se demuestran las
+destrezas obtenidas durante el transcurso de la asignatura de
+<b>Arquitectura de Computadores</b>:
+</p>
+
+<ol class="org-ol">
+<li>Conocimientos de sistema operativo Linux</li>
+<li>Conocimientos de Emacs/Jupyter</li>
+<li>Configuración de Entorno para Data Science con Mamba/Anaconda</li>
+<li>Literate Programming</li>
+</ol>
+
+<p>
+La ciudad objeto de estudio del <b>Grupo 3</b> es <b>Ciudad de México</b>
+(lat: 19.4326, lon: -99.1332).
+</p>
+</div>
+<div id="outline-container-org5eda5fe" class="outline-3">
+<h3 id="org5eda5fe"><span class="section-number-3">2.1.</span> Estructura del proyecto</h3>
+<div class="outline-text-3" id="text-2-1">
+<p>
+El proyecto se creó en el <i>home</i> del sistema operativo, en la carpeta
+<i>MexicoWeather</i>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell"><span style="font-weight: bold;">pwd</span>
+</pre>
+</div>
+
+<p>
+Estructura de archivos y subdirectorios del proyecto:
+</p>
+</div>
+</div>
+<div id="outline-container-org09053ef" class="outline-3">
+<h3 id="org09053ef"><span class="section-number-3">2.2.</span> Formulación del Problema</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+Se desea realizar un registro climatológico de la Ciudad de México
+\(\mathcal{C}\). Para esto, se escribió un script de Python que permite
+obtener datos climatológicos desde el API de <a href="https://openweathermap.org/current">openweathermap</a>. El API
+hace uso de los valores de latitud \(x\) y longitud \(y\) de la ciudad
+\(\mathcal{C}\) para devolver los valores actuales a un tiempo \(t\).
+</p>
+
+<p>
+Los resultados obtenidos de la consulta al API se escriben en el
+archivo <i>clima-mexico-hoy.csv</i>. Cada ejecución del script almacena
+nuevos datos en el archivo. Se utiliza <b>crontab</b> para obtener datos
+con una periodicidad de 15 minutos mediante la ejecución del archivo
+ejecutable <i>get-weather.sh</i>, respaldando la salida en <i>output.log</i>.
+</p>
+</div>
+</div>
+<div id="outline-container-org4dc4f47" class="outline-3">
+<h3 id="org4dc4f47"><span class="section-number-3">2.3.</span> Descripción del código</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+La estrategia de solución se divide en tres unidades funcionales:
+(1) consulta al API, (2) normalización del JSON anidado a columnas
+planas, y (3) escritura incremental al CSV.
+</p>
+</div>
+<div id="outline-container-orgc4b0859" class="outline-4">
+<h4 id="orgc4b0859"><span class="section-number-4">2.3.1.</span> Lectura del API</h4>
+<div class="outline-text-4" id="text-2-3-1">
+<p>
+La función <code>get_weather</code> consulta el endpoint <i>Current Weather</i> con
+las coordenadas de la ciudad y devuelve la respuesta JSON como un
+diccionario de Python:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold;">def</span> <span style="font-weight: bold;">get_weather</span>(lat, lon, api_key):
+    <span style="font-style: italic;">"""Consulta el API de OpenWeatherMap y devuelve el JSON como dict.
+    Docs: https://openweathermap.org/current"""</span>
+    <span style="font-weight: bold; font-style: italic;">url</span> = <span style="font-style: italic;">"https://api.openweathermap.org/data/2.5/weather"</span>
+    <span style="font-weight: bold; font-style: italic;">params</span> = {<span style="font-style: italic;">"lat"</span>: lat, <span style="font-style: italic;">"lon"</span>: lon, <span style="font-style: italic;">"appid"</span>: api_key, <span style="font-style: italic;">"units"</span>: <span style="font-style: italic;">"metric"</span>}
+    <span style="font-weight: bold; font-style: italic;">response</span> = requests.get(url, params=params, timeout=30)
+    <span style="font-weight: bold;">return</span> response.json()
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgdfb2ea2" class="outline-4">
+<h4 id="orgdfb2ea2"><span class="section-number-4">2.3.2.</span> Convertir JSON a columnas planas</h4>
+<div class="outline-text-4" id="text-2-3-2">
+<p>
+El JSON del API contiene diccionarios anidados (<code>main</code>, <code>wind</code>, <code>sys</code>)
+y listas (<code>weather</code>). La función recursiva <code>flatten</code> los convierte en
+claves planas con separador <code>_</code> (ej: <code>main.temp</code> → <code>main_temp</code>). Esto
+garantiza que <b>toda</b> la información del API quede en columnas, como
+exige el enunciado. Los campos <code>rain</code> y <code>snow</code>, que solo aparecen
+cuando existe el fenómeno, están declarados en la lista fija
+<code>FIELDNAMES</code>, de modo que el CSV siempre tiene las mismas columnas y
+quedan vacíos cuando el API no los envía:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold;">def</span> <span style="font-weight: bold;">flatten</span>(data, parent_key=<span style="font-style: italic;">""</span>):
+    <span style="font-style: italic;">"""Aplana un diccionario anidado usando '_' como separador."""</span>
+    <span style="font-weight: bold; font-style: italic;">items</span> = {}
+    <span style="font-weight: bold;">for</span> key, value <span style="font-weight: bold;">in</span> data.items():
+        <span style="font-weight: bold; font-style: italic;">new_key</span> = f<span style="font-style: italic;">"</span>{parent_key}<span style="font-style: italic;">_</span>{key}<span style="font-style: italic;">"</span> <span style="font-weight: bold;">if</span> parent_key <span style="font-weight: bold;">else</span> key
+        <span style="font-weight: bold;">if</span> <span style="font-weight: bold;">isinstance</span>(value, <span style="font-weight: bold;">dict</span>):
+            items.update(flatten(value, new_key))
+        <span style="font-weight: bold;">elif</span> <span style="font-weight: bold;">isinstance</span>(value, <span style="font-weight: bold;">list</span>):
+            <span style="font-weight: bold;">for</span> i, elem <span style="font-weight: bold;">in</span> <span style="font-weight: bold;">enumerate</span>(value):
+                <span style="font-weight: bold;">if</span> <span style="font-weight: bold;">isinstance</span>(elem, <span style="font-weight: bold;">dict</span>):
+                    items.update(flatten(elem, f<span style="font-style: italic;">"</span>{new_key}<span style="font-style: italic;">_</span>{i}<span style="font-style: italic;">"</span>))
+                <span style="font-weight: bold;">else</span>:
+                    <span style="font-weight: bold; font-style: italic;">items</span>[f<span style="font-style: italic;">"</span>{new_key}<span style="font-style: italic;">_</span>{i}<span style="font-style: italic;">"</span>] = elem
+        <span style="font-weight: bold;">else</span>:
+            <span style="font-weight: bold; font-style: italic;">items</span>[new_key] = value
+    <span style="font-weight: bold;">return</span> items
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orga460824" class="outline-4">
+<h4 id="orga460824"><span class="section-number-4">2.3.3.</span> Guardar el archivo csv</h4>
+<div class="outline-text-4" id="text-2-3-3">
+<p>
+La función <code>write2csv</code> agrega una fila por ejecución y escribe el
+encabezado únicamente si el archivo aún no existe:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold;">def</span> <span style="font-weight: bold;">write2csv</span>(data_dict, csv_filename):
+    <span style="font-weight: bold; font-style: italic;">file_exists</span> = os.path.isfile(csv_filename)
+    <span style="font-weight: bold;">with</span> <span style="font-weight: bold;">open</span>(csv_filename, <span style="font-style: italic;">"a"</span>, newline=<span style="font-style: italic;">""</span>) <span style="font-weight: bold;">as</span> f:
+        <span style="font-weight: bold; font-style: italic;">writer</span> = csv.DictWriter(f, fieldnames=FIELDNAMES)
+        <span style="font-weight: bold;">if</span> <span style="font-weight: bold;">not</span> file_exists:
+            writer.writeheader()
+        writer.writerow(data_dict)
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org6967e02" class="outline-3">
+<h3 id="org6967e02"><span class="section-number-3">2.4.</span> Script ejecutable sh</h3>
+<div class="outline-text-3" id="text-2-4">
+<p>
+Ubicación del intérprete de shell y del entorno mamba <i>iccd332</i>
+utilizado:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">which bash
+</pre>
+</div>
+
+<div class="org-src-container">
+<pre class="src src-shell">which mamba
+</pre>
+</div>
+
+<p>
+Contenido del ejecutable <i>get-weather.sh</i>. Se usa <code>#!/bin/bash</code> (y no
+<code>sh~/dash, que no dispone del comando ~source</code>), se activa el entorno
+<i>iccd332</i> y la API key se pasa como variable de entorno para no
+exponerla en el código fuente:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell"><span style="font-weight: bold; font-style: italic;">#</span><span style="font-weight: bold; font-style: italic;">!/bin/</span><span style="font-weight: bold;">bash</span><span style="font-weight: bold; font-style: italic;">
+</span><span style="font-weight: bold;">cd</span> <span style="font-style: italic;">"$(</span><span style="font-weight: bold;">dirname "$0"</span><span style="font-style: italic;">)"</span> || <span style="font-weight: bold;">exit</span> 1
+<span style="font-weight: bold;">source</span> <span style="font-style: italic;">"/home/anthonio/miniforge3/etc/profile.d/conda.sh"</span>
+<span style="font-weight: bold;">eval</span> <span style="font-style: italic;">"$(</span><span style="font-weight: bold;">conda shell.bash hook</span><span style="font-style: italic;">)"</span>
+conda activate iccd332
+<span style="font-weight: bold;">export</span> <span style="font-weight: bold; font-style: italic;">OWM_API_KEY</span>=<span style="font-style: italic;">"********"</span>
+python main.py
+</pre>
+</div>
+
+<p>
+El script se convirtió en ejecutable con:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">chmod +x get-weather.sh
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orga322378" class="outline-3">
+<h3 id="orga322378"><span class="section-number-3">2.5.</span> Configuración de Crontab</h3>
+<div class="outline-text-3" id="text-2-5">
+<p>
+Configuración realizada en crontab para la adquisición de datos cada
+15 minutos:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell">*/15 * * * * /home/anthonio/MexicoWeather/get-weather.sh &gt;&gt; /home/anthonio/MexicoWeather/output.log 2&gt;&amp;1
+</pre>
+</div>
+
+<ul class="org-ul">
+<li><code>*/15</code> ejecuta el script cada 15 minutos.</li>
+<li><code>&gt;&gt;</code> agrega la salida al final de <i>output.log</i> (lo crea si no existe).</li>
+<li><code>2&gt;&amp;1</code> redirige también los errores al mismo archivo de log.</li>
+</ul>
+
+<p>
+Verificación de la ejecución automática en <i>output.log</i>:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-shell"><span style="font-weight: bold;">cd</span> ../..
+tail -n 5 output.log
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgfa4e67e" class="outline-2">
+<h2 id="orgfa4e67e"><span class="section-number-2">3.</span> Presentación de resultados</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+Para la presentación de resultados se utilizan las librerías de
+Python <b>pandas</b> y <b>matplotlib</b>, instaladas en el entorno <i>iccd332</i>.
+</p>
+</div>
+<div id="outline-container-orgc66a27e" class="outline-3">
+<h3 id="orgc66a27e"><span class="section-number-3">3.1.</span> Muestra Aleatoria de datos</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+Se presenta una muestra de 10 valores aleatorios de los datos
+obtenidos. Primero se verifica la estructura del DataFrame
+(filas x columnas):
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listado de programa 1 </span>Lectura de archivo csv</label><pre class="src src-python"><span style="font-weight: bold;">import</span> pandas <span style="font-weight: bold;">as</span> pd
+<span style="font-weight: bold; font-style: italic;">df</span> = pd.read_csv(<span style="font-style: italic;">'/home/anthonio/MexicoWeather/clima-mexico-hoy.csv'</span>)
+<span style="font-weight: bold;">print</span>(df.shape)
+</pre>
+</div>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listado de programa 2 </span>Despliegue de datos aleatorios</label><pre class="src src-python"><span style="font-weight: bold; font-style: italic;">table1</span> = df.sample(10)
+<span style="font-weight: bold; font-style: italic;">table</span> = [<span style="font-weight: bold;">list</span>(table1)]+[<span style="font-weight: bold; text-decoration: underline;">None</span>]+table1.values.tolist()
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgca87463" class="outline-3">
+<h3 id="orgca87463"><span class="section-number-3">3.2.</span> Gráfica Temperatura vs Tiempo</h3>
+<div class="outline-text-3" id="text-3-2">
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold;">import</span> matplotlib.pyplot <span style="font-weight: bold;">as</span> plt
+<span style="font-weight: bold; font-style: italic;">fig</span> = plt.figure(figsize=(8,6))
+plt.plot(df[<span style="font-style: italic;">'fecha_consulta'</span>], df[<span style="font-style: italic;">'main_temp'</span>])
+plt.grid()
+plt.title(f<span style="font-style: italic;">'Temperatura vs Tiempo en </span>{<span style="font-weight: bold;">next</span>(<span style="font-weight: bold;">iter</span>(<span style="font-weight: bold;">set</span>(df.name)))}<span style="font-style: italic;">'</span>)
+plt.xlabel(<span style="font-style: italic;">'Fecha y hora'</span>)
+plt.ylabel(<span style="font-style: italic;">'Temperatura (&#176;C)'</span>)
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">mostrar 1 de cada 6 etiquetas del eje x para que no se encimen
+</span><span style="font-weight: bold; font-style: italic;">ax</span> = plt.gca()
+ax.set_xticks(ax.get_xticks()[::6])
+plt.xticks(rotation=40)
+fig.tight_layout()
+<span style="font-weight: bold; font-style: italic;">fname</span> = <span style="font-style: italic;">'./images/temperature.png'</span>
+plt.savefig(fname)
+fname
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org29e9b0b" class="outline-3">
+<h3 id="org29e9b0b"><span class="section-number-3">3.3.</span> Gráfica de Humedad con respecto al tiempo</h3>
+<div class="outline-text-3" id="text-3-3">
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">fig</span> = plt.figure(figsize=(8,6))
+plt.plot(df[<span style="font-style: italic;">'fecha_consulta'</span>], df[<span style="font-style: italic;">'main_humidity'</span>], color=<span style="font-style: italic;">'teal'</span>)
+plt.grid()
+plt.title(f<span style="font-style: italic;">'Humedad vs Tiempo en </span>{<span style="font-weight: bold;">next</span>(<span style="font-weight: bold;">iter</span>(<span style="font-weight: bold;">set</span>(df.name)))}<span style="font-style: italic;">'</span>)
+plt.xlabel(<span style="font-style: italic;">'Fecha y hora'</span>)
+plt.ylabel(<span style="font-style: italic;">'Humedad relativa (%)'</span>)
+<span style="font-weight: bold; font-style: italic;">ax</span> = plt.gca()
+ax.set_xticks(ax.get_xticks()[::6])
+plt.xticks(rotation=40)
+fig.tight_layout()
+<span style="font-weight: bold; font-style: italic;">fname</span> = <span style="font-style: italic;">'./images/humidity.png'</span>
+plt.savefig(fname)
+fname
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgc4d6a3d" class="outline-3">
+<h3 id="orgc4d6a3d"><span class="section-number-3">3.4.</span> Opcional: Gráfica de interés (Presión atmosférica)</h3>
+<div class="outline-text-3" id="text-3-4">
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">fig</span> = plt.figure(figsize=(8,6))
+plt.plot(df[<span style="font-style: italic;">'fecha_consulta'</span>], df[<span style="font-style: italic;">'main_pressure'</span>], color=<span style="font-style: italic;">'darkorange'</span>)
+plt.grid()
+plt.title(f<span style="font-style: italic;">'Presi&#243;n atmosf&#233;rica vs Tiempo en </span>{<span style="font-weight: bold;">next</span>(<span style="font-weight: bold;">iter</span>(<span style="font-weight: bold;">set</span>(df.name)))}<span style="font-style: italic;">'</span>)
+plt.xlabel(<span style="font-style: italic;">'Fecha y hora'</span>)
+plt.ylabel(<span style="font-style: italic;">'Presi&#243;n (hPa)'</span>)
+<span style="font-weight: bold; font-style: italic;">ax</span> = plt.gca()
+ax.set_xticks(ax.get_xticks()[::6])
+plt.xticks(rotation=40)
+fig.tight_layout()
+<span style="font-weight: bold; font-style: italic;">fname</span> = <span style="font-style: italic;">'./images/pressure.png'</span>
+plt.savefig(fname)
+fname
+</pre>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-org7b8a0f5" class="outline-2">
+<h2 id="org7b8a0f5"><span class="section-number-2">4.</span> Referencias</h2>
+<div class="outline-text-2" id="text-4">
+<ul class="org-ul">
+<li><a href="https://openweathermap.org/current">API OpenWeatherMap - Current Weather Data</a></li>
+<li><a href="https://docs.python.org/3/library/csv.html#csv.DictWriter">Documentación de csv.DictWriter - Python</a></li>
+<li><a href="https://requests.readthedocs.io/en/latest/user/quickstart/">Librería requests - Quickstart</a></li>
+<li><a href="https://stackoverflow.com/questions/6027558/flatten-nested-dictionaries-compressing-keys">Aplanar diccionarios anidados - StackOverflow</a></li>
+<li><a href="https://stackoverflow.com/questions/34534513/calling-conda-source-activate-from-bash-script">Activar conda desde un script bash - StackOverflow</a></li>
+<li><a href="https://emacs.stackexchange.com/questions/28715/get-pandas-data-frame-as-a-table-in-org-babel">Presentar DataFrame como tabla en org-babel</a></li>
+<li><a href="https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-python.html">Python Source Code Blocks in Org Mode</a></li>
+<li><a href="https://systemcrafters.net/publishing-websites-with-org-mode/building-the-site/">System Crafters: Publishing Websites with Org Mode</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Fecha: 2026-07-13</p>
+<p class="author">Autor: Grupo 3</p>
+<p class="date">Created: 2026-07-13 Mon 21:48</p>
+</div>
+</body>
+</html>

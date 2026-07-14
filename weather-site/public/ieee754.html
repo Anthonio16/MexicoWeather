@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+<!-- 2026-07-13 Mon 21:48 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Representación Decimal en IEEE 754</title>
+<meta name="author" content="Grupo 3" />
+<meta name="generator" content="Org Mode" />
+<link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css" />
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">Representación Decimal en IEEE 754</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>&Iacute;ndice</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org9389e1b">1. Representación Decimal en IEEE 754</a>
+<ul>
+<li><a href="#org7e597cf">1.1. Concepto</a></li>
+<li><a href="#org58f85bc">1.2. Implementación en JavaScript</a></li>
+<li><a href="#orgb7aa058">1.3. Código en Emacs ORG</a></li>
+<li><a href="#orgd0ebe28">1.4. Conversor Interactivo Decimal → IEEE 754 (32 bits)</a></li>
+<li><a href="#org9cc84f2">1.5. Ejemplo manual de verificación</a></li>
+</ul>
+</li>
+<li><a href="#orge160032">2. Referencias</a></li>
+</ul>
+</div>
+</div>
+<p>
+<a href="index.html">Inicio</a> | <a href="seguridad.html">Análisis INEC: Robo a Domicilio</a>
+</p>
+<div id="outline-container-org9389e1b" class="outline-2">
+<h2 id="org9389e1b"><span class="section-number-2">1.</span> Representación Decimal en IEEE 754</h2>
+<div class="outline-text-2" id="text-1">
+</div>
+<div id="outline-container-org7e597cf" class="outline-3">
+<h3 id="org7e597cf"><span class="section-number-3">1.1.</span> Concepto</h3>
+<div class="outline-text-3" id="text-1-1">
+<p>
+El estándar <b>IEEE 754</b> define cómo representar números reales en
+binario dentro del computador. En precisión simple (32 bits), un
+número se descompone en tres campos:
+</p>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-right" />
+
+<col  class="org-left" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Campo</th>
+<th scope="col" class="org-right">Bits</th>
+<th scope="col" class="org-left">Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Signo</td>
+<td class="org-right">1</td>
+<td class="org-left">0 = positivo, 1 = negativo</td>
+</tr>
+
+<tr>
+<td class="org-left">Exponente</td>
+<td class="org-right">8</td>
+<td class="org-left">Exponente sesgado (bias = 127)</td>
+</tr>
+
+<tr>
+<td class="org-left">Mantisa</td>
+<td class="org-right">23</td>
+<td class="org-left">Parte fraccionaria normalizada (1.f implícito)</td>
+</tr>
+</tbody>
+</table>
+
+<p>
+El valor del número se reconstruye con la fórmula:
+</p>
+
+<p>
+\[V = (-1)^{S} \times 1.M \times 2^{(E - 127)}\]
+</p>
+
+<p>
+Los pasos para convertir un decimal a IEEE 754 son:
+</p>
+<ol class="org-ol">
+<li>Determinar el bit de <b>signo</b> (S).</li>
+<li>Convertir el valor absoluto a binario (parte entera y fraccionaria).</li>
+<li><b>Normalizar</b> a la forma \(1.M \times 2^{e}\).</li>
+<li>Calcular el <b>exponente sesgado</b>: \(E = e + 127\) y expresarlo en 8 bits.</li>
+<li>Tomar los primeros 23 bits de la fracción como <b>mantisa</b>.</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-org58f85bc" class="outline-3">
+<h3 id="org58f85bc"><span class="section-number-3">1.2.</span> Implementación en JavaScript</h3>
+<div class="outline-text-3" id="text-1-2">
+<p>
+Siguiendo el procedimiento indicado en el curso, el código <code>html</code> y
+<code>javascript</code> se inserta en un bloque <code>#+begin_export html</code> que Emacs
+exporta directamente a la página. La conversión aprovecha los objetos
+<code>Float32Array</code> y <code>DataView</code> de JavaScript, que almacenan el número
+exactamente en el formato binario IEEE 754 de 32 bits, del cual se
+extraen los tres campos.
+</p>
+
+<p>
+Fuentes consultadas:
+</p>
+<ul class="org-ul">
+<li><a href="https://es.wikipedia.org/wiki/IEEE_754">IEEE 754 - Wikipedia</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView">DataView - MDN Web Docs</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array">Float32Array - MDN Web Docs</a></li>
+<li><a href="https://www.h-schmidt.net/FloatConverter/IEEE754.html">IEEE-754 Floating Point Converter (referencia de verificación)</a></li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orgb7aa058" class="outline-3">
+<h3 id="orgb7aa058"><span class="section-number-3">1.3.</span> Código en Emacs ORG</h3>
+<div class="outline-text-3" id="text-1-3">
+<div class="org-src-container">
+<pre class="src src-org"><span style="font-weight: bold; font-style: italic;">#+begin_export html
+</span>&lt;input type="text" id="decimalInput" placeholder="Ej: -12.375"&gt;
+&lt;button onclick="convertIEEE754()"&gt;Convertir&lt;/button&gt;
+&lt;div id="ieeeResult"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+function convertIEEE754() {
+  const value = parseFloat(document.getElementById("decimalInput").value);
+  // ... extraccion de bits con Float32Array/DataView ...
+}
+&lt;/script&gt;
+<span style="font-weight: bold; font-style: italic;">#+end_export</span>
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgd0ebe28" class="outline-3">
+<h3 id="orgd0ebe28"><span class="section-number-3">1.4.</span> Conversor Interactivo Decimal → IEEE 754 (32 bits)</h3>
+<div class="outline-text-3" id="text-1-4">
+<p>
+Ingrese un número decimal (puede ser negativo y con parte
+fraccionaria) y presione <b>Convertir</b>:
+</p>
+
+<div style="border:1px solid #ccc; border-radius:8px; padding:1em; margin:1em 0;">
+  <input type="text" id="decimalInput" placeholder="Ej: -12.375" style="width:180px;">
+  <button onclick="convertIEEE754()">Convertir</button>
+  <div id="ieeeResult" style="margin-top:1em; font-family:monospace;"></div>
+</div>
+
+<script>
+// Conversor decimal -> IEEE 754 precision simple (32 bits)
+// Fuentes:
+// - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
+// - https://es.wikipedia.org/wiki/IEEE_754
+function convertIEEE754() {
+  const input = document.getElementById("decimalInput").value;
+  const value = parseFloat(input);
+  const out = document.getElementById("ieeeResult");
+
+  if (isNaN(value) && input.trim().toLowerCase() !== "nan") {
+    out.innerHTML = "<span style='color:red'>Ingrese un número válido</span>";
+    return;
+  }
+
+  // Escribir el numero como float de 32 bits y leer sus bits crudos
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+  view.setFloat32(0, value);
+  const bits = view.getUint32(0);
+
+  // Binario de 32 bits con ceros a la izquierda
+  const binStr = bits.toString(2).padStart(32, "0");
+
+  // Separacion de los tres campos del estandar
+  const sign     = binStr.slice(0, 1);    // 1 bit
+  const exponent = binStr.slice(1, 9);    // 8 bits
+  const mantissa = binStr.slice(9);       // 23 bits
+
+  const expValue  = parseInt(exponent, 2);        // exponente sesgado
+  const realExp   = expValue - 127;               // exponente real (bias 127)
+  const hexStr    = "0x" + bits.toString(16).toUpperCase().padStart(8, "0");
+  const stored32  = view.getFloat32(0);           // valor realmente almacenado
+
+  out.innerHTML =
+    "<b>Número ingresado:</b> " + value + "<br>" +
+    "<b>Binario (32 bits):</b> " +
+    "<span style='color:#c0392b'>" + sign + "</span> " +
+    "<span style='color:#2471a3'>" + exponent + "</span> " +
+    "<span style='color:#1e8449'>" + mantissa + "</span><br>" +
+    "<b style='color:#c0392b'>Signo (1 bit):</b> " + sign +
+      (sign === "0" ? " (positivo)" : " (negativo)") + "<br>" +
+    "<b style='color:#2471a3'>Exponente (8 bits):</b> " + exponent +
+      " = " + expValue + " (sesgado) &rarr; exponente real = " + expValue + " - 127 = " + realExp + "<br>" +
+    "<b style='color:#1e8449'>Mantisa (23 bits):</b> " + mantissa + "<br>" +
+    "<b>Hexadecimal:</b> " + hexStr + "<br>" +
+    "<b>Valor almacenado (32 bits):</b> " + stored32 +
+      (stored32 !== value && !isNaN(value)
+        ? " <i>(difiere del ingresado por la precisión finita)</i>" : "");
+}
+</script>
+</div>
+</div>
+<div id="outline-container-org9cc84f2" class="outline-3">
+<h3 id="org9cc84f2"><span class="section-number-3">1.5.</span> Ejemplo manual de verificación</h3>
+<div class="outline-text-3" id="text-1-5">
+<p>
+Para \(-12.375\):
+</p>
+<ol class="org-ol">
+<li>Signo: negativo → \(S = 1\)</li>
+<li>\(12.375_{10} = 1100.011_{2}\) (pues \(12 = 1100_2\) y \(0.375 = 0.011_2\))</li>
+<li>Normalizando: \(1.100011 \times 2^{3}\)</li>
+<li>Exponente sesgado: \(3 + 127 = 130 = 10000010_{2}\)</li>
+<li>Mantisa: \(10001100000000000000000\)</li>
+</ol>
+
+<p>
+Resultado: <code>1 10000010 10001100000000000000000</code> = <code>0xC1460000</code>, que
+coincide con el conversor interactivo.
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-orge160032" class="outline-2">
+<h2 id="orge160032"><span class="section-number-2">2.</span> Referencias</h2>
+<div class="outline-text-2" id="text-2">
+<ul class="org-ul">
+<li><a href="https://es.wikipedia.org/wiki/IEEE_754">IEEE 754 - Wikipedia</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView">DataView - MDN Web Docs</a></li>
+<li><a href="https://www.h-schmidt.net/FloatConverter/IEEE754.html">IEEE-754 Floating Point Converter</a></li>
+<li>Stallings, W. <i>Computer Organization and Architecture</i>. Capítulo de aritmética del computador.</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Fecha: 2026-07-13</p>
+<p class="author">Autor: Grupo 3</p>
+<p class="date">Created: 2026-07-13 Mon 21:48</p>
+</div>
+</body>
+</html>
