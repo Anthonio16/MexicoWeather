@@ -1,0 +1,147 @@
+#+options: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline
+#+options: author:t broken-links:nil c:nil creator:nil
+#+options: d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t num:t
+#+options: p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t
+#+options: timestamp:t title:t toc:t todo:t |:t
+#+title: Representación Decimal en IEEE 754
+#+date: 2026-07-13
+#+author: Grupo 3
+#+language: es
+#+select_tags: export
+#+exclude_tags: noexport
+
+[[file:index.org][Inicio]] | [[file:seguridad.org][Análisis INEC: Robo a Domicilio]]
+
+* Representación Decimal en IEEE 754
+** Concepto
+El estándar *IEEE 754* define cómo representar números reales en
+binario dentro del computador. En precisión simple (32 bits), un
+número se descompone en tres campos:
+
+| Campo     | Bits | Descripción                                  |
+|-----------+------+----------------------------------------------|
+| Signo     |    1 | 0 = positivo, 1 = negativo                   |
+| Exponente |    8 | Exponente sesgado (bias = 127)               |
+| Mantisa   |   23 | Parte fraccionaria normalizada (1.f implícito) |
+
+El valor del número se reconstruye con la fórmula:
+
+$$V = (-1)^{S} \times 1.M \times 2^{(E - 127)}$$
+
+Los pasos para convertir un decimal a IEEE 754 son:
+1. Determinar el bit de *signo* (S).
+2. Convertir el valor absoluto a binario (parte entera y fraccionaria).
+3. *Normalizar* a la forma $1.M \times 2^{e}$.
+4. Calcular el *exponente sesgado*: $E = e + 127$ y expresarlo en 8 bits.
+5. Tomar los primeros 23 bits de la fracción como *mantisa*.
+
+** Implementación en JavaScript
+Siguiendo el procedimiento indicado en el curso, el código ~html~ y
+~javascript~ se inserta en un bloque ~#+begin_export html~ que Emacs
+exporta directamente a la página. La conversión aprovecha los objetos
+~Float32Array~ y ~DataView~ de JavaScript, que almacenan el número
+exactamente en el formato binario IEEE 754 de 32 bits, del cual se
+extraen los tres campos.
+
+Fuentes consultadas:
+- [[https://es.wikipedia.org/wiki/IEEE_754][IEEE 754 - Wikipedia]]
+- [[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView][DataView - MDN Web Docs]]
+- [[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array][Float32Array - MDN Web Docs]]
+- [[https://www.h-schmidt.net/FloatConverter/IEEE754.html][IEEE-754 Floating Point Converter (referencia de verificación)]]
+
+** Código en Emacs ORG
+#+begin_src org
+,#+begin_export html
+<input type="text" id="decimalInput" placeholder="Ej: -12.375">
+<button onclick="convertIEEE754()">Convertir</button>
+<div id="ieeeResult"></div>
+
+<script>
+function convertIEEE754() {
+  const value = parseFloat(document.getElementById("decimalInput").value);
+  // ... extraccion de bits con Float32Array/DataView ...
+}
+</script>
+,#+end_export
+#+end_src
+
+** Conversor Interactivo Decimal → IEEE 754 (32 bits)
+Ingrese un número decimal (puede ser negativo y con parte
+fraccionaria) y presione *Convertir*:
+
+#+begin_export html
+<div style="border:1px solid #ccc; border-radius:8px; padding:1em; margin:1em 0;">
+  <input type="text" id="decimalInput" placeholder="Ej: -12.375" style="width:180px;">
+  <button onclick="convertIEEE754()">Convertir</button>
+  <div id="ieeeResult" style="margin-top:1em; font-family:monospace;"></div>
+</div>
+
+<script>
+// Conversor decimal -> IEEE 754 precision simple (32 bits)
+// Fuentes:
+// - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView
+// - https://es.wikipedia.org/wiki/IEEE_754
+function convertIEEE754() {
+  const input = document.getElementById("decimalInput").value;
+  const value = parseFloat(input);
+  const out = document.getElementById("ieeeResult");
+
+  if (isNaN(value) && input.trim().toLowerCase() !== "nan") {
+    out.innerHTML = "<span style='color:red'>Ingrese un número válido</span>";
+    return;
+  }
+
+  // Escribir el numero como float de 32 bits y leer sus bits crudos
+  const buffer = new ArrayBuffer(4);
+  const view = new DataView(buffer);
+  view.setFloat32(0, value);
+  const bits = view.getUint32(0);
+
+  // Binario de 32 bits con ceros a la izquierda
+  const binStr = bits.toString(2).padStart(32, "0");
+
+  // Separacion de los tres campos del estandar
+  const sign     = binStr.slice(0, 1);    // 1 bit
+  const exponent = binStr.slice(1, 9);    // 8 bits
+  const mantissa = binStr.slice(9);       // 23 bits
+
+  const expValue  = parseInt(exponent, 2);        // exponente sesgado
+  const realExp   = expValue - 127;               // exponente real (bias 127)
+  const hexStr    = "0x" + bits.toString(16).toUpperCase().padStart(8, "0");
+  const stored32  = view.getFloat32(0);           // valor realmente almacenado
+
+  out.innerHTML =
+    "<b>Número ingresado:</b> " + value + "<br>" +
+    "<b>Binario (32 bits):</b> " +
+    "<span style='color:#c0392b'>" + sign + "</span> " +
+    "<span style='color:#2471a3'>" + exponent + "</span> " +
+    "<span style='color:#1e8449'>" + mantissa + "</span><br>" +
+    "<b style='color:#c0392b'>Signo (1 bit):</b> " + sign +
+      (sign === "0" ? " (positivo)" : " (negativo)") + "<br>" +
+    "<b style='color:#2471a3'>Exponente (8 bits):</b> " + exponent +
+      " = " + expValue + " (sesgado) &rarr; exponente real = " + expValue + " - 127 = " + realExp + "<br>" +
+    "<b style='color:#1e8449'>Mantisa (23 bits):</b> " + mantissa + "<br>" +
+    "<b>Hexadecimal:</b> " + hexStr + "<br>" +
+    "<b>Valor almacenado (32 bits):</b> " + stored32 +
+      (stored32 !== value && !isNaN(value)
+        ? " <i>(difiere del ingresado por la precisión finita)</i>" : "");
+}
+</script>
+#+end_export
+
+** Ejemplo manual de verificación
+Para $-12.375$:
+1. Signo: negativo → $S = 1$
+2. $12.375_{10} = 1100.011_{2}$ (pues $12 = 1100_2$ y $0.375 = 0.011_2$)
+3. Normalizando: $1.100011 \times 2^{3}$
+4. Exponente sesgado: $3 + 127 = 130 = 10000010_{2}$
+5. Mantisa: $10001100000000000000000$
+
+Resultado: ~1 10000010 10001100000000000000000~ = ~0xC1460000~, que
+coincide con el conversor interactivo.
+
+* Referencias
+- [[https://es.wikipedia.org/wiki/IEEE_754][IEEE 754 - Wikipedia]]
+- [[https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView][DataView - MDN Web Docs]]
+- [[https://www.h-schmidt.net/FloatConverter/IEEE754.html][IEEE-754 Floating Point Converter]]
+- Stallings, W. /Computer Organization and Architecture/. Capítulo de aritmética del computador.

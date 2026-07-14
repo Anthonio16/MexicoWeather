@@ -19,7 +19,7 @@ MEXICO_LON = -99.1332
 
 # La API key se lee de una variable de entorno para no exponerla en GitHub.
 # Fuente: https://docs.python.org/3/library/os.html#os.environ
-API_KEY = os.environ.get("OWM_API_KEY", "PON_AQUI_TU_KEY_SI_NO_USAS_ENV")
+API_KEY = os.environ.get("OWM_API_KEY", "1487d66062fc8358ef8f6e8752b25400")
 
 FILE_NAME = "clima-mexico-hoy.csv"
 

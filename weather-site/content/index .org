@@ -1,0 +1,257 @@
+#+options: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline
+#+options: author:t broken-links:nil c:nil creator:nil
+#+options: d:(not "LOGBOOK") date:t e:t email:nil expand-links:t f:t
+#+options: inline:t num:t p:nil pri:nil prop:nil stat:t tags:t
+#+options: tasks:t tex:t timestamp:t title:t toc:t todo:t |:t
+#+title: Proyecto ICCD332: City Weather APP - Ciudad de México
+#+date: 2026-07-13
+#+author: Grupo 3
+#+language: es
+#+select_tags: export
+#+exclude_tags: noexport
+
+* Navegación
+- [[file:index.org][Página principal: City Weather APP]]
+- [[file:ieee754.org][Página 2: Representación IEEE 754]]
+- [[file:seguridad.org][Página 3: Análisis INEC - Robo a Domicilio]]
+
+* City Weather APP
+Este es el proyecto de fin de semestre en donde se demuestran las
+destrezas obtenidas durante el transcurso de la asignatura de
+*Arquitectura de Computadores*:
+
+1. Conocimientos de sistema operativo Linux
+2. Conocimientos de Emacs/Jupyter
+3. Configuración de Entorno para Data Science con Mamba/Anaconda
+4. Literate Programming
+
+La ciudad objeto de estudio del *Grupo 3* es *Ciudad de México*
+(lat: 19.4326, lon: -99.1332).
+
+** Estructura del proyecto
+El proyecto se creó en el /home/ del sistema operativo, en la carpeta
+/MexicoWeather/:
+
+#+begin_src shell :results output :exports both
+pwd
+#+end_src
+
+Estructura de archivos y subdirectorios del proyecto:
+
+#+begin_src shell :results output :exports results
+cd ../..
+tree -I '.packages'
+#+end_src
+
+** Formulación del Problema
+Se desea realizar un registro climatológico de la Ciudad de México
+$\mathcal{C}$. Para esto, se escribió un script de Python que permite
+obtener datos climatológicos desde el API de [[https://openweathermap.org/current][openweathermap]]. El API
+hace uso de los valores de latitud $x$ y longitud $y$ de la ciudad
+$\mathcal{C}$ para devolver los valores actuales a un tiempo $t$.
+
+Los resultados obtenidos de la consulta al API se escriben en el
+archivo /clima-mexico-hoy.csv/. Cada ejecución del script almacena
+nuevos datos en el archivo. Se utiliza *crontab* para obtener datos
+con una periodicidad de 15 minutos mediante la ejecución del archivo
+ejecutable /get-weather.sh/, respaldando la salida en /output.log/.
+
+** Descripción del código
+La estrategia de solución se divide en tres unidades funcionales:
+(1) consulta al API, (2) normalización del JSON anidado a columnas
+planas, y (3) escritura incremental al CSV.
+
+*** Lectura del API
+La función ~get_weather~ consulta el endpoint /Current Weather/ con
+las coordenadas de la ciudad y devuelve la respuesta JSON como un
+diccionario de Python:
+
+#+begin_src python :exports code
+def get_weather(lat, lon, api_key):
+    """Consulta el API de OpenWeatherMap y devuelve el JSON como dict.
+    Docs: https://openweathermap.org/current"""
+    url = "https://api.openweathermap.org/data/2.5/weather"
+    params = {"lat": lat, "lon": lon, "appid": api_key, "units": "metric"}
+    response = requests.get(url, params=params, timeout=30)
+    return response.json()
+#+end_src
+
+*** Convertir JSON a columnas planas
+El JSON del API contiene diccionarios anidados (~main~, ~wind~, ~sys~)
+y listas (~weather~). La función recursiva ~flatten~ los convierte en
+claves planas con separador ~_~ (ej: ~main.temp~ → ~main_temp~). Esto
+garantiza que *toda* la información del API quede en columnas, como
+exige el enunciado. Los campos ~rain~ y ~snow~, que solo aparecen
+cuando existe el fenómeno, están declarados en la lista fija
+~FIELDNAMES~, de modo que el CSV siempre tiene las mismas columnas y
+quedan vacíos cuando el API no los envía:
+
+#+begin_src python :exports code
+def flatten(data, parent_key=""):
+    """Aplana un diccionario anidado usando '_' como separador."""
+    items = {}
+    for key, value in data.items():
+        new_key = f"{parent_key}_{key}" if parent_key else key
+        if isinstance(value, dict):
+            items.update(flatten(value, new_key))
+        elif isinstance(value, list):
+            for i, elem in enumerate(value):
+                if isinstance(elem, dict):
+                    items.update(flatten(elem, f"{new_key}_{i}"))
+                else:
+                    items[f"{new_key}_{i}"] = elem
+        else:
+            items[new_key] = value
+    return items
+#+end_src
+
+*** Guardar el archivo csv
+La función ~write2csv~ agrega una fila por ejecución y escribe el
+encabezado únicamente si el archivo aún no existe:
+
+#+begin_src python :exports code
+def write2csv(data_dict, csv_filename):
+    file_exists = os.path.isfile(csv_filename)
+    with open(csv_filename, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(data_dict)
+#+end_src
+
+** Script ejecutable sh
+Ubicación del intérprete de shell y del entorno mamba /iccd332/
+utilizado:
+
+#+begin_src shell :results output :exports both
+which bash
+#+end_src
+
+#+begin_src shell :results output :exports both
+which mamba
+#+end_src
+
+Contenido del ejecutable /get-weather.sh/. Se usa ~#!/bin/bash~ (y no
+~sh~/dash, que no dispone del comando ~source~), se activa el entorno
+/iccd332/ y la API key se pasa como variable de entorno para no
+exponerla en el código fuente:
+
+#+begin_src shell :exports code
+#!/bin/bash
+cd "$(dirname "$0")" || exit 1
+source "/home/anthonio/miniforge3/etc/profile.d/conda.sh"
+eval "$(conda shell.bash hook)"
+conda activate iccd332
+export OWM_API_KEY="********"
+python main.py
+#+end_src
+
+El script se convirtió en ejecutable con:
+
+#+begin_src shell :exports code
+chmod +x get-weather.sh
+#+end_src
+
+** Configuración de Crontab
+Configuración realizada en crontab para la adquisición de datos cada
+15 minutos:
+
+#+begin_src shell :exports code
+*/15 * * * * /home/anthonio/MexicoWeather/get-weather.sh >> /home/anthonio/MexicoWeather/output.log 2>&1
+#+end_src
+
+- ~*/15~ ejecuta el script cada 15 minutos.
+- ~>>~ agrega la salida al final de /output.log/ (lo crea si no existe).
+- ~2>&1~ redirige también los errores al mismo archivo de log.
+
+Verificación de la ejecución automática en /output.log/:
+
+#+begin_src shell :results output :exports both
+cd ../..
+tail -n 5 output.log
+#+end_src
+
+* Presentación de resultados
+Para la presentación de resultados se utilizan las librerías de
+Python *pandas* y *matplotlib*, instaladas en el entorno /iccd332/.
+
+** Muestra Aleatoria de datos
+Se presenta una muestra de 10 valores aleatorios de los datos
+obtenidos. Primero se verifica la estructura del DataFrame
+(filas x columnas):
+
+#+caption: Lectura de archivo csv
+#+begin_src python :session :results output :exports both
+import pandas as pd
+df = pd.read_csv('/home/anthonio/MexicoWeather/clima-mexico-hoy.csv')
+print(df.shape)
+#+end_src
+
+#+caption: Despliegue de datos aleatorios
+#+begin_src python :session :exports both :results value table :return table
+table1 = df.sample(10)
+table = [list(table1)]+[None]+table1.values.tolist()
+#+end_src
+
+** Gráfica Temperatura vs Tiempo
+#+begin_src python :results file :exports both :session
+import matplotlib.pyplot as plt
+fig = plt.figure(figsize=(8,6))
+plt.plot(df['fecha_consulta'], df['main_temp'])
+plt.grid()
+plt.title(f'Temperatura vs Tiempo en {next(iter(set(df.name)))}')
+plt.xlabel('Fecha y hora')
+plt.ylabel('Temperatura (°C)')
+# mostrar 1 de cada 6 etiquetas del eje x para que no se encimen
+ax = plt.gca()
+ax.set_xticks(ax.get_xticks()[::6])
+plt.xticks(rotation=40)
+fig.tight_layout()
+fname = './images/temperature.png'
+plt.savefig(fname)
+fname
+#+end_src
+
+** Gráfica de Humedad con respecto al tiempo
+#+begin_src python :results file :exports both :session
+fig = plt.figure(figsize=(8,6))
+plt.plot(df['fecha_consulta'], df['main_humidity'], color='teal')
+plt.grid()
+plt.title(f'Humedad vs Tiempo en {next(iter(set(df.name)))}')
+plt.xlabel('Fecha y hora')
+plt.ylabel('Humedad relativa (%)')
+ax = plt.gca()
+ax.set_xticks(ax.get_xticks()[::6])
+plt.xticks(rotation=40)
+fig.tight_layout()
+fname = './images/humidity.png'
+plt.savefig(fname)
+fname
+#+end_src
+
+** Opcional: Gráfica de interés (Presión atmosférica)
+#+begin_src python :results file :exports both :session
+fig = plt.figure(figsize=(8,6))
+plt.plot(df['fecha_consulta'], df['main_pressure'], color='darkorange')
+plt.grid()
+plt.title(f'Presión atmosférica vs Tiempo en {next(iter(set(df.name)))}')
+plt.xlabel('Fecha y hora')
+plt.ylabel('Presión (hPa)')
+ax = plt.gca()
+ax.set_xticks(ax.get_xticks()[::6])
+plt.xticks(rotation=40)
+fig.tight_layout()
+fname = './images/pressure.png'
+plt.savefig(fname)
+fname
+#+end_src
+
+* Referencias
+- [[https://openweathermap.org/current][API OpenWeatherMap - Current Weather Data]]
+- [[https://docs.python.org/3/library/csv.html#csv.DictWriter][Documentación de csv.DictWriter - Python]]
+- [[https://requests.readthedocs.io/en/latest/user/quickstart/][Librería requests - Quickstart]]
+- [[https://stackoverflow.com/questions/6027558/flatten-nested-dictionaries-compressing-keys][Aplanar diccionarios anidados - StackOverflow]]
+- [[https://stackoverflow.com/questions/34534513/calling-conda-source-activate-from-bash-script][Activar conda desde un script bash - StackOverflow]]
+- [[https://emacs.stackexchange.com/questions/28715/get-pandas-data-frame-as-a-table-in-org-babel][Presentar DataFrame como tabla en org-babel]]
+- [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-python.html][Python Source Code Blocks in Org Mode]]
+- [[https://systemcrafters.net/publishing-websites-with-org-mode/building-the-site/][System Crafters: Publishing Websites with Org Mode]]
