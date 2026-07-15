@@ -66,8 +66,8 @@ function convertIEEE754() {
 #+end_src
 
 ** Conversor Interactivo Decimal → IEEE 754 (32 bits)
-Ingrese un número decimal (puede ser negativo y con parte
-fraccionaria) y presione *Convertir*:
+Ingrese un número decimal que puede ser negativo y con parte
+fraccionaria y presione *Convertir*:
 
 #+begin_export html
 <div style="border:1px solid #ccc; border-radius:8px; padding:1em; margin:1em 0;">

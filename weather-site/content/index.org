@@ -16,7 +16,7 @@
 - [[file:seguridad.org][Página 3: Análisis INEC - Robo a Domicilio]]
 
 * City Weather APP
-Este es el proyecto de fin de semestre en donde se demuestran las
+Este es nuestro proyecto de fin de semestre en donde se demuestran las
 destrezas obtenidas durante el transcurso de la asignatura de
 *Arquitectura de Computadores*:
 
@@ -85,12 +85,12 @@ tree -I '.packages'
 ** Formulación del Problema
 Se desea realizar un registro climatológico de la Ciudad de México
 $\mathcal{C}$. Para esto, se escribió un script de Python que permite
-obtener datos climatológicos desde el API de [[https://openweathermap.org/current][openweathermap]]. El API
+obtener datos climatológicos desde el API de [[https://openweathermap.org/current][openweathermap]], el API
 hace uso de los valores de latitud $x$ y longitud $y$ de la ciudad
 $\mathcal{C}$ para devolver los valores actuales a un tiempo $t$.
 
 Los resultados obtenidos de la consulta al API se escriben en el
-archivo /clima-mexico-hoy.csv/. Cada ejecución del script almacena
+archivo /clima-mexico-hoy.csv/, cada ejecución del script almacena
 nuevos datos en el archivo. Se utiliza *crontab* para obtener datos
 con una periodicidad de 15 minutos mediante la ejecución del archivo
 ejecutable /get-weather.sh/, respaldando la salida en /output.log/.
@@ -120,10 +120,10 @@ def get_weather(lat, lon, api_key):
 
 *** Convertir JSON a columnas planas
 El JSON del API contiene diccionarios anidados (~main~, ~wind~, ~sys~)
-y listas (~weather~). La función recursiva ~flatten~ los convierte en
+y listas (~weather~), la función recursiva ~flatten~ los convierte en
 claves planas con separador ~_~ (ej: ~main.temp~ → ~main_temp~). Esto
 garantiza que *toda* la información del API quede en columnas, como
-exige el enunciado. Los campos ~rain~ y ~snow~, que solo aparecen
+exige el enunciado, los campos ~rain~ y ~snow~, que solo aparecen
 cuando existe el fenómeno, están declarados en la lista fija
 ~FIELDNAMES~, de modo que el CSV siempre tiene las mismas columnas y
 quedan vacíos cuando el API no los envía:
@@ -318,7 +318,7 @@ fname
 #+RESULTS:
 [[file:./images/humidity.png]]
 
-** Opcional: Gráfica de interés (Presión atmosférica)
+** Gráfica de interés (Presión atmosférica)
 #+begin_src python :results file :exports both :session
 fig = plt.figure(figsize=(8,6))
 plt.plot(df['fecha_consulta'], df['main_pressure'], color='darkorange')
