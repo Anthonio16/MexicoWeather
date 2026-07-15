@@ -36,12 +36,51 @@ El proyecto se creó en el /home/ del sistema operativo, en la carpeta
 pwd
 #+end_src
 
+#+RESULTS:
+: /home/anthonio/MexicoWeather/weather-site/content
+
 Estructura de archivos y subdirectorios del proyecto:
 
 #+begin_src shell :results output :exports results
 cd ../..
 tree -I '.packages'
 #+end_src
+
+#+RESULTS:
+#+begin_example
+.
+├── clima-mexico-hoy.csv
+├── consultas-ia.md
+├── Datos_de_Seguridad_Ecuador.xlsx
+├── get-weather.sh
+├── main.py
+├── output.log
+└── weather-site
+    ├── build.sh
+    ├── build-site.el
+    ├── content
+    │   ├── ieee754.org
+    │   ├── images
+    │   │   ├── humidity.png
+    │   │   ├── pressure.png
+    │   │   ├── robo_domicilio_anual.png
+    │   │   ├── robo_domicilio_provincias.png
+    │   │   └── temperature.png
+    │   ├── index.org
+    │   └── seguridad.org
+    └── public
+        ├── ieee754.html
+        ├── images
+        │   ├── humidity.png
+        │   ├── pressure.png
+        │   ├── robo_domicilio_anual.png
+        │   ├── robo_domicilio_provincias.png
+        │   └── temperature.png
+        ├── index.html
+        └── seguridad.html
+
+6 directories, 24 files
+#+end_example
 
 ** Formulación del Problema
 Se desea realizar un registro climatológico de la Ciudad de México
@@ -76,6 +115,9 @@ def get_weather(lat, lon, api_key):
     return response.json()
 #+end_src
 
+#+RESULTS:
+: None
+
 *** Convertir JSON a columnas planas
 El JSON del API contiene diccionarios anidados (~main~, ~wind~, ~sys~)
 y listas (~weather~). La función recursiva ~flatten~ los convierte en
@@ -105,6 +147,9 @@ def flatten(data, parent_key=""):
     return items
 #+end_src
 
+#+RESULTS:
+: None
+
 *** Guardar el archivo csv
 La función ~write2csv~ agrega una fila por ejecución y escribe el
 encabezado únicamente si el archivo aún no existe:
@@ -119,6 +164,9 @@ def write2csv(data_dict, csv_filename):
         writer.writerow(data_dict)
 #+end_src
 
+#+RESULTS:
+: None
+
 ** Script ejecutable sh
 Ubicación del intérprete de shell y del entorno mamba /iccd332/
 utilizado:
@@ -127,9 +175,15 @@ utilizado:
 which bash
 #+end_src
 
+#+RESULTS:
+: /usr/bin/bash
+
 #+begin_src shell :results output :exports both
 which mamba
 #+end_src
+
+#+RESULTS:
+: /home/anthonio/miniforge3/condabin/mamba
 
 Contenido del ejecutable /get-weather.sh/. Se usa ~#!/bin/bash~ (y no
 ~sh~/dash, que no dispone del comando ~source~), se activa el entorno
@@ -146,11 +200,15 @@ export OWM_API_KEY="********"
 python main.py
 #+end_src
 
+#+RESULTS:
+
 El script se convirtió en ejecutable con:
 
 #+begin_src shell :exports code
 chmod +x get-weather.sh
 #+end_src
+
+#+RESULTS:
 
 ** Configuración de Crontab
 Configuración realizada en crontab para la adquisición de datos cada
@@ -159,6 +217,8 @@ Configuración realizada en crontab para la adquisición de datos cada
 #+begin_src shell :exports code
 */15 * * * * /home/anthonio/MexicoWeather/get-weather.sh >> /home/anthonio/MexicoWeather/output.log 2>&1
 #+end_src
+
+#+RESULTS:
 
 - ~*/15~ ejecuta el script cada 15 minutos.
 - ~>>~ agrega la salida al final de /output.log/ (lo crea si no existe).
@@ -170,6 +230,12 @@ Verificación de la ejecución automática en /output.log/:
 cd ../..
 tail -n 5 output.log
 #+end_src
+
+#+RESULTS:
+: ===== Mexico-Clima | Grupo 3 ICCD332 =====
+: [OK] Dato guardado: 2026-07-14 19:15:03 | Mexico City | temp=23.83C | few clouds
+: ===== Mexico-Clima | Grupo 3 ICCD332 =====
+: [OK] Dato guardado: 2026-07-14 19:30:03 | Mexico City | temp=23.83C | few clouds
 
 * Presentación de resultados
 Para la presentación de resultados se utilizan las librerías de
@@ -187,11 +253,28 @@ df = pd.read_csv('/home/anthonio/MexicoWeather/clima-mexico-hoy.csv')
 print(df.shape)
 #+end_src
 
+#+RESULTS:
+: (85, 35)
+
 #+caption: Despliegue de datos aleatorios
 #+begin_src python :session :exports both :results value table :return table
 table1 = df.sample(10)
 table = [list(table1)]+[None]+table1.values.tolist()
 #+end_src
+
+#+RESULTS:
+| fecha_consulta      | coord_lon | coord_lat | weather_0_id | weather_0_main | weather_0_description | weather_0_icon | base     | main_temp | main_feels_like | main_temp_min | main_temp_max | main_pressure | main_humidity | main_sea_level | main_grnd_level | visibility | wind_speed | wind_deg | wind_gust | rain_1h | rain_3h | snow_1h | snow_3h | clouds_all | dt                  | sys_type |  sys_id | sys_country | sys_sunrise         | sys_sunset          | timezone |      id | name        | cod |
+|---------------------+-----------+-----------+--------------+----------------+-----------------------+----------------+----------+-----------+-----------------+---------------+---------------+---------------+---------------+----------------+-----------------+------------+------------+----------+-----------+---------+---------+---------+---------+------------+---------------------+----------+---------+-------------+---------------------+---------------------+----------+---------+-------------+-----|
+| 2026-07-14 00:00:03 |  -99.1332 |   19.4326 |          804 | Clouds         | overcast clouds       |            04n | stations |     16.61 |           16.34 |         16.61 |         16.61 |          1020 |            77 |           1020 |             766 |      10000 |       3.58 |      310 |       nan |     nan |     nan |     nan |     nan |         89 | 2026-07-13 23:53:26 |      2.0 | 47729.0 | MX          | 2026-07-13 07:05:48 | 2026-07-13 20:18:22 |   -21600 | 3530597 | Mexico City | 200 |
+| 2026-07-14 11:00:02 |  -99.1277 |   19.4285 |          802 | Clouds         | scattered clouds      |            03d | stations |     17.75 |           17.12 |         17.75 |         17.75 |          1019 |            59 |           1019 |             766 |      10000 |       1.67 |       52 |      0.96 |     nan |     nan |     nan |     nan |         41 | 2026-07-14 10:50:40 |      2.0 | 47729.0 | MX          | 2026-07-14 07:06:09 | 2026-07-14 20:18:11 |   -21600 | 3530597 | Mexico City | 200 |
+| 2026-07-14 10:45:02 |  -99.1294 |   19.4287 |          802 | Clouds         | scattered clouds      |            03d | stations |     17.75 |           17.12 |         17.75 |         17.75 |          1019 |            59 |           1019 |             766 |      10000 |       1.67 |       52 |      0.96 |     nan |     nan |     nan |     nan |         41 | 2026-07-14 10:44:38 |      2.0 | 47729.0 | MX          | 2026-07-14 07:06:09 | 2026-07-14 20:18:12 |   -21600 | 3530597 | Mexico City | 200 |
+| 2026-07-14 16:30:02 |  -99.1332 |   19.4326 |          800 | Clear          | clear sky             |            01d | stations |     24.94 |           24.14 |         24.94 |         24.94 |          1012 |            25 |           1012 |             764 |      10000 |       2.68 |      100 |       nan |     nan |     nan |     nan |     nan |          3 | 2026-07-14 16:26:10 |      2.0 | 47729.0 | MX          | 2026-07-14 07:06:10 | 2026-07-14 20:18:13 |   -21600 | 3530597 | Mexico City | 200 |
+| 2026-07-14 13:15:02 |  -99.1332 |   19.4326 |          802 | Clouds         | scattered clouds      |            03d | stations |     22.72 |           22.09 |         22.72 |         22.72 |          1017 |            40 |           1017 |             766 |      10000 |       1.79 |       60 |       nan |     nan |     nan |     nan |     nan |         32 | 2026-07-14 13:05:20 |      2.0 | 47729.0 | MX          | 2026-07-14 07:06:10 | 2026-07-14 20:18:13 |   -21600 | 3530597 | Mexico City | 200 |
+| 2026-07-14 08:45:03 |  -99.1332 |   19.4326 |          803 | Clouds         | broken clouds         |            04d | stations |     13.83 |           13.25 |         13.83 |         13.83 |          1021 |            76 |           1021 |             767 |      10000 |       1.79 |       90 |       nan |     nan |     nan |     nan |     nan |         56 | 2026-07-14 08:42:49 |      2.0 | 47729.0 | MX          | 2026-07-14 07:06:10 | 2026-07-14 20:18:13 |   -21600 | 3530597 | Mexico City | 200 |
+| 2026-07-14 08:30:02 |  -99.1277 |   19.4285 |          803 | Clouds         | broken clouds         |            04d | stations |     13.86 |           13.29 |         13.86 |         13.86 |          1021 |            76 |           1021 |             766 |      10000 |       1.79 |       90 |       nan |     nan |     nan |     nan |     nan |         70 | 2026-07-14 08:21:17 |      2.0 | 47729.0 | MX          | 2026-07-14 07:06:09 | 2026-07-14 20:18:11 |   -21600 | 3530597 | Mexico City | 200 |
+| 2026-07-14 00:15:02 |  -99.1332 |   19.4326 |          804 | Clouds         | overcast clouds       |            04n | stations |      15.5 |           15.25 |          15.5 |          15.5 |          1021 |            82 |           1021 |             766 |      10000 |       1.79 |      320 |       nan |     nan |     nan |     nan |     nan |         89 | 2026-07-14 00:05:02 |      2.0 | 47729.0 | MX          | 2026-07-13 07:05:48 | 2026-07-13 20:18:22 |   -21600 | 3530597 | Mexico City | 200 |
+| 2026-07-13 21:24:18 |  -99.1332 |   19.4326 |          500 | Rain           | light rain            |            10n | stations |     19.22 |           18.84 |         19.22 |         19.22 |          1016 |            63 |           1016 |             765 |      10000 |       0.79 |      179 |      1.48 |     0.4 |     nan |     nan |     nan |         89 | 2026-07-13 21:14:35 |      nan |     nan | MX          | 2026-07-13 07:05:48 | 2026-07-13 20:18:22 |   -21600 | 3530597 | Mexico City | 200 |
+| 2026-07-13 22:15:04 |  -99.1332 |   19.4326 |          500 | Rain           | light rain            |            10n | stations |      15.5 |           15.25 |          15.5 |          15.5 |          1017 |            82 |           1017 |             766 |      10000 |       2.68 |      280 |       nan |    0.48 |     nan |     nan |     nan |         95 | 2026-07-13 22:10:19 |      2.0 | 47729.0 | MX          | 2026-07-13 07:05:48 | 2026-07-13 20:18:22 |   -21600 | 3530597 | Mexico City | 200 |
 
 ** Gráfica Temperatura vs Tiempo
 #+begin_src python :results file :exports both :session
@@ -212,6 +295,9 @@ plt.savefig(fname)
 fname
 #+end_src
 
+#+RESULTS:
+[[file:./images/temperature.png]]
+
 ** Gráfica de Humedad con respecto al tiempo
 #+begin_src python :results file :exports both :session
 fig = plt.figure(figsize=(8,6))
@@ -229,6 +315,9 @@ plt.savefig(fname)
 fname
 #+end_src
 
+#+RESULTS:
+[[file:./images/humidity.png]]
+
 ** Opcional: Gráfica de interés (Presión atmosférica)
 #+begin_src python :results file :exports both :session
 fig = plt.figure(figsize=(8,6))
@@ -245,6 +334,9 @@ fname = './images/pressure.png'
 plt.savefig(fname)
 fname
 #+end_src
+
+#+RESULTS:
+[[file:./images/pressure.png]]
 
 * Referencias
 - [[https://openweathermap.org/current][API OpenWeatherMap - Current Weather Data]]

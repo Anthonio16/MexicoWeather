@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+<!-- 2026-07-14 Tue 19:39 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Análisis de Cifras de Seguridad INEC: Robo a Domicilio</title>
+<meta name="author" content="Grupo 3" />
+<meta name="generator" content="Org Mode" />
+<link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css" />
+</head>
+<body>
+<div id="content" class="content">
+<h1 class="title">Análisis de Cifras de Seguridad INEC: Robo a Domicilio</h1>
+<div id="table-of-contents" role="doc-toc">
+<h2>&Iacute;ndice</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org4e0f209">1. Introducción</a></li>
+<li><a href="#org73720c5">2. Descripción de los datos y su procesamiento</a>
+<ul>
+<li><a href="#orge951378">2.1. Carga y limpieza de los datos</a></li>
+<li><a href="#org6bac4ec">2.2. Validación de la serie nacional</a></li>
+</ul>
+</li>
+<li><a href="#org374065d">3. Resultados</a>
+<ul>
+<li><a href="#org6d8adcc">3.1. Tabla 1: Total nacional de denuncias por año</a></li>
+<li><a href="#orga2d7b00">3.2. Tabla 2: Diez provincias con más denuncias en 2025</a></li>
+<li><a href="#org4dbaccc">3.3. Gráfico 1: Evolución anual del robo a domicilio (2014-2025)</a></li>
+<li><a href="#orgaf90344">3.4. Gráfico 2: Provincias con más denuncias en 2025</a></li>
+</ul>
+</li>
+<li><a href="#orgb6f9373">4. Interpretación de resultados</a></li>
+<li><a href="#org17cd7d0">5. Referencias</a></li>
+</ul>
+</div>
+</div>
+<p>
+<a href="index.html">Inicio</a> | <a href="ieee754.html">Representación IEEE 754</a>
+</p>
+<div id="outline-container-org4e0f209" class="outline-2">
+<h2 id="org4e0f209"><span class="section-number-2">1.</span> Introducción</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+En esta página se presenta un breve análisis de las estadísticas de
+<b>robo a domicilio</b> en Ecuador, a partir de los datos abiertos del
+Instituto Nacional de Estadística y Censos (INEC) publicados en las
+<i>Estadísticas de Seguridad Integral: Delitos de mayor connotación
+psicosocial</i> (corte: febrero 2026).
+</p>
+
+<p>
+Según el INEC, el <b>robo a domicilio</b> es el "evento que se caracteriza
+cuando una persona o grupo de personas ingrese a un domicilio ajeno
+mediante amenazas, violentando o haciendo uso de la fuerza con el fin
+de sustraer o apoderarse de un bien u objeto que se encuentre en el
+domicilio o sea parte del bien inmueble, excepto vehículos a motor"
+(Manual de Conceptualización de Indicadores de Seguridad Ciudadana y
+Convivencia Pacífica desde el Enfoque de la Prevención, 2015).
+</p>
+</div>
+</div>
+<div id="outline-container-org73720c5" class="outline-2">
+<h2 id="org73720c5"><span class="section-number-2">2.</span> Descripción de los datos y su procesamiento</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+El archivo <i>Datos<sub>de</sub><sub>Seguridad</sub><sub>Ecuador.xlsx</sub></i> contiene 13 hojas con los
+delitos de mayor connotación. Se utiliza la hoja <b>10.robo<sub>domicilio</sub></b>,
+que registra el número de <b>denuncias</b> de robo a domicilio por <b>cantón
+de ocurrencia</b>, con una columna por mes desde enero 2014 hasta febrero
+2026 (146 meses, 221 cantones).
+</p>
+
+<p>
+El procesamiento con <b>pandas</b> consiste en:
+</p>
+<ol class="org-ol">
+<li>Leer la hoja indicando que el encabezado está en la fila 4
+(<code>header=3</code>) y descartar la primera columna vacía.</li>
+<li>Renombrar las tres columnas de identificación (provincia, código
+DPA, cantón) y eliminar filas sin provincia.</li>
+<li>Separar la fila <i>Total Nacional</i> del detalle cantonal para no
+duplicar los totales.</li>
+<li>Agregar por mes (serie nacional), por año y por provincia.</li>
+</ol>
+
+<p>
+<b>Validación:</b> la serie obtenida se contrastó con dos fuentes: (a) la
+fila <i>Total Nacional</i> del propio Excel y (b) la presentación oficial
+del INEC de febrero 2026, que reporta 721 denuncias en enero-febrero
+2025, 630 en enero-febrero 2026 (variación de -12,6%) y 4.407 en el
+total de 2025. Los tres valores coinciden con los calculados.
+</p>
+</div>
+<div id="outline-container-orge951378" class="outline-3">
+<h3 id="orge951378"><span class="section-number-3">2.1.</span> Carga y limpieza de los datos</h3>
+<div class="outline-text-3" id="text-2-1">
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Fuentes:
+</span><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">- pandas.read_excel: https://pandas.pydata.org/docs/reference/api/pandas.read_excel.html
+</span><span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">- INEC, Estadisticas de Seguridad Integral: https://www.ecuadorencifras.gob.ec/justicia-y-crimen/
+</span><span style="font-weight: bold;">import</span> pandas <span style="font-weight: bold;">as</span> pd
+<span style="font-weight: bold;">from</span> datetime <span style="font-weight: bold;">import</span> datetime
+
+<span style="font-weight: bold; font-style: italic;">RUTA</span> = <span style="font-style: italic;">'/home/anthonio/MexicoWeather/Datos_de_Seguridad_Ecuador.xlsx'</span>
+
+<span style="font-weight: bold; font-style: italic;">df</span> = pd.read_excel(RUTA, sheet_name=<span style="font-style: italic;">'10.robo_domicilio'</span>, header=3)
+<span style="font-weight: bold; font-style: italic;">df</span> = df.drop(columns=df.columns[0])          <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">primera columna vacia
+</span><span style="font-weight: bold; font-style: italic;">df</span> = df.rename(columns={df.columns[0]: <span style="font-style: italic;">'provincia'</span>,
+                        df.columns[1]: <span style="font-style: italic;">'codigo_canton'</span>,
+                        df.columns[2]: <span style="font-style: italic;">'canton'</span>})
+<span style="font-weight: bold; font-style: italic;">df</span> = df.dropna(subset=[<span style="font-style: italic;">'provincia'</span>])
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Separar la fila de Total Nacional del detalle por canton
+</span><span style="font-weight: bold; font-style: italic;">total_row</span> = df[df[<span style="font-style: italic;">'provincia'</span>] == <span style="font-style: italic;">'Total Nacional'</span>]
+<span style="font-weight: bold; font-style: italic;">df</span> = df[df[<span style="font-style: italic;">'provincia'</span>] != <span style="font-style: italic;">'Total Nacional'</span>]
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">Columnas de meses (son objetos datetime en el encabezado)
+</span><span style="font-weight: bold; font-style: italic;">month_cols</span> = [c <span style="font-weight: bold;">for</span> c <span style="font-weight: bold;">in</span> df.columns <span style="font-weight: bold;">if</span> <span style="font-weight: bold;">isinstance</span>(c, datetime)]
+<span style="font-weight: bold;">print</span>(f<span style="font-style: italic;">"Cantones: </span>{<span style="font-weight: bold;">len</span>(df)}<span style="font-style: italic;"> | Meses: </span>{<span style="font-weight: bold;">len</span>(month_cols)}<span style="font-style: italic;"> "</span>
+      f<span style="font-style: italic;">"(</span>{month_cols[0].date()}<span style="font-style: italic;"> a </span>{month_cols[-1].date()}<span style="font-style: italic;">)"</span>)
+</pre>
+</div>
+
+<pre class="example">
+Cantones: 221 | Meses: 146 (2014-01-01 a 2026-02-01)
+</pre>
+</div>
+</div>
+<div id="outline-container-org6bac4ec" class="outline-3">
+<h3 id="org6bac4ec"><span class="section-number-3">2.2.</span> Validación de la serie nacional</h3>
+<div class="outline-text-3" id="text-2-2">
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">serie</span> = df[month_cols].<span style="font-weight: bold;">sum</span>()
+serie.<span style="font-weight: bold; font-style: italic;">index</span> = pd.to_datetime(serie.index)
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">(a) contraste con la fila Total Nacional del Excel
+</span><span style="font-weight: bold; font-style: italic;">serie_total</span> = total_row[month_cols].iloc[0]
+serie_total.<span style="font-weight: bold; font-style: italic;">index</span> = pd.to_datetime(serie_total.index)
+<span style="font-weight: bold;">print</span>(<span style="font-style: italic;">"Suma de cantones == fila Total Nacional:"</span>, (serie == serie_total).<span style="font-weight: bold;">all</span>())
+
+<span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">(b) contraste con la presentacion oficial INEC feb-2026
+</span><span style="font-weight: bold;">print</span>(<span style="font-style: italic;">"Ene-Feb 2025:"</span>, <span style="font-weight: bold;">int</span>(serie[<span style="font-style: italic;">'2025-01-01'</span>] + serie[<span style="font-style: italic;">'2025-02-01'</span>]), <span style="font-style: italic;">"(INEC: 721)"</span>)
+<span style="font-weight: bold;">print</span>(<span style="font-style: italic;">"Ene-Feb 2026:"</span>, <span style="font-weight: bold;">int</span>(serie[<span style="font-style: italic;">'2026-01-01'</span>] + serie[<span style="font-style: italic;">'2026-02-01'</span>]), <span style="font-style: italic;">"(INEC: 630)"</span>)
+<span style="font-weight: bold;">print</span>(<span style="font-style: italic;">"Total 2025  :"</span>, <span style="font-weight: bold;">int</span>(serie[serie.index.year == 2025].<span style="font-weight: bold;">sum</span>()), <span style="font-style: italic;">"(INEC: 4.407)"</span>)
+</pre>
+</div>
+
+<pre class="example">
+Suma de cantones == fila Total Nacional: True
+Ene-Feb 2025: 721 (INEC: 721)
+Ene-Feb 2026: 630 (INEC: 630)
+Total 2025  : 4407 (INEC: 4.407)
+</pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org374065d" class="outline-2">
+<h2 id="org374065d"><span class="section-number-2">3.</span> Resultados</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-org6d8adcc" class="outline-3">
+<h3 id="org6d8adcc"><span class="section-number-3">3.1.</span> Tabla 1: Total nacional de denuncias por año</h3>
+<div class="outline-text-3" id="text-3-1">
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">anual</span> = serie.groupby(serie.index.year).<span style="font-weight: bold;">sum</span>().astype(<span style="font-weight: bold;">int</span>)
+<span style="font-weight: bold; font-style: italic;">var</span> = anual.pct_change().mul(100).<span style="font-weight: bold;">round</span>(1)
+<span style="font-weight: bold; font-style: italic;">tabla_anual</span> = [[<span style="font-style: italic;">"A&#241;o"</span>, <span style="font-style: italic;">"Denuncias"</span>, <span style="font-style: italic;">"Variaci&#243;n %"</span>]] + [<span style="font-weight: bold; text-decoration: underline;">None</span>] + \
+    [[<span style="font-weight: bold;">int</span>(a), <span style="font-weight: bold;">int</span>(v), (<span style="font-style: italic;">""</span> <span style="font-weight: bold;">if</span> pd.isna(p) <span style="font-weight: bold;">else</span> f<span style="font-style: italic;">"</span>{p:+.1f}<span style="font-style: italic;">%"</span>)]
+     <span style="font-weight: bold;">for</span> a, v, p <span style="font-weight: bold;">in</span> <span style="font-weight: bold;">zip</span>(anual.index, anual.values, var.values)]
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-right" />
+
+<col  class="org-right" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-right">Año</th>
+<th scope="col" class="org-right">Denuncias</th>
+<th scope="col" class="org-right">Variación %</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-right">2014</td>
+<td class="org-right">17707</td>
+<td class="org-right">&#xa0;</td>
+</tr>
+
+<tr>
+<td class="org-right">2015</td>
+<td class="org-right">19347</td>
+<td class="org-right">+9.3%</td>
+</tr>
+
+<tr>
+<td class="org-right">2016</td>
+<td class="org-right">16190</td>
+<td class="org-right">-16.3%</td>
+</tr>
+
+<tr>
+<td class="org-right">2017</td>
+<td class="org-right">14575</td>
+<td class="org-right">-10.0%</td>
+</tr>
+
+<tr>
+<td class="org-right">2018</td>
+<td class="org-right">12428</td>
+<td class="org-right">-14.7%</td>
+</tr>
+
+<tr>
+<td class="org-right">2019</td>
+<td class="org-right">11099</td>
+<td class="org-right">-10.7%</td>
+</tr>
+
+<tr>
+<td class="org-right">2020</td>
+<td class="org-right">7369</td>
+<td class="org-right">-33.6%</td>
+</tr>
+
+<tr>
+<td class="org-right">2021</td>
+<td class="org-right">8198</td>
+<td class="org-right">+11.2%</td>
+</tr>
+
+<tr>
+<td class="org-right">2022</td>
+<td class="org-right">8386</td>
+<td class="org-right">+2.3%</td>
+</tr>
+
+<tr>
+<td class="org-right">2023</td>
+<td class="org-right">7226</td>
+<td class="org-right">-13.8%</td>
+</tr>
+
+<tr>
+<td class="org-right">2024</td>
+<td class="org-right">5699</td>
+<td class="org-right">-21.1%</td>
+</tr>
+
+<tr>
+<td class="org-right">2025</td>
+<td class="org-right">4407</td>
+<td class="org-right">-22.7%</td>
+</tr>
+
+<tr>
+<td class="org-right">2026</td>
+<td class="org-right">630</td>
+<td class="org-right">-85.7%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-orga2d7b00" class="outline-3">
+<h3 id="orga2d7b00"><span class="section-number-3">3.2.</span> Tabla 2: Diez provincias con más denuncias en 2025</h3>
+<div class="outline-text-3" id="text-3-2">
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">cols2025</span> = [c <span style="font-weight: bold;">for</span> c <span style="font-weight: bold;">in</span> month_cols <span style="font-weight: bold;">if</span> c.year == 2025]
+<span style="font-weight: bold; font-style: italic;">top_prov</span> = (df.groupby(<span style="font-style: italic;">'provincia'</span>)[cols2025].<span style="font-weight: bold;">sum</span>().<span style="font-weight: bold;">sum</span>(axis=1)
+              .sort_values(ascending=<span style="font-weight: bold; text-decoration: underline;">False</span>).head(10).astype(<span style="font-weight: bold;">int</span>))
+<span style="font-weight: bold; font-style: italic;">tabla_prov</span> = [[<span style="font-style: italic;">"Provincia"</span>, <span style="font-style: italic;">"Denuncias 2025"</span>]] + [<span style="font-weight: bold; text-decoration: underline;">None</span>] + \
+    [[prov, <span style="font-weight: bold;">int</span>(val)] <span style="font-weight: bold;">for</span> prov, val <span style="font-weight: bold;">in</span> top_prov.items()]
+</pre>
+</div>
+
+<table border="2" cellspacing="0" cellpadding="6" rules="groups" frame="hsides">
+
+
+<colgroup>
+<col  class="org-left" />
+
+<col  class="org-right" />
+</colgroup>
+<thead>
+<tr>
+<th scope="col" class="org-left">Provincia</th>
+<th scope="col" class="org-right">Denuncias 2025</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="org-left">Guayas</td>
+<td class="org-right">1142</td>
+</tr>
+
+<tr>
+<td class="org-left">Pichincha</td>
+<td class="org-right">959</td>
+</tr>
+
+<tr>
+<td class="org-left">Manabí</td>
+<td class="org-right">325</td>
+</tr>
+
+<tr>
+<td class="org-left">Imbabura</td>
+<td class="org-right">220</td>
+</tr>
+
+<tr>
+<td class="org-left">Santa Elena</td>
+<td class="org-right">201</td>
+</tr>
+
+<tr>
+<td class="org-left">Azuay</td>
+<td class="org-right">174</td>
+</tr>
+
+<tr>
+<td class="org-left">Esmeraldas</td>
+<td class="org-right">170</td>
+</tr>
+
+<tr>
+<td class="org-left">Chimborazo</td>
+<td class="org-right">169</td>
+</tr>
+
+<tr>
+<td class="org-left">Los Ríos</td>
+<td class="org-right">169</td>
+</tr>
+
+<tr>
+<td class="org-left">El Oro</td>
+<td class="org-right">167</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="outline-container-org4dbaccc" class="outline-3">
+<h3 id="org4dbaccc"><span class="section-number-3">3.3.</span> Gráfico 1: Evolución anual del robo a domicilio (2014-2025)</h3>
+<div class="outline-text-3" id="text-3-3">
+<p>
+Se excluye 2026 por estar incompleto (solo enero-febrero disponibles).
+</p>
+
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold;">import</span> matplotlib.pyplot <span style="font-weight: bold;">as</span> plt
+
+<span style="font-weight: bold; font-style: italic;">anual_full</span> = anual[anual.index &lt;= 2025]
+<span style="font-weight: bold; font-style: italic;">fig</span> = plt.figure(figsize=(9, 5.5))
+<span style="font-weight: bold; font-style: italic;">bars</span> = plt.bar(anual_full.index.astype(<span style="font-weight: bold;">str</span>), anual_full.values, color=<span style="font-style: italic;">'#2471a3'</span>)
+plt.bar_label(bars, fontsize=8)
+plt.title(<span style="font-style: italic;">'Robo a domicilio en Ecuador: total nacional por a&#241;o (2014-2025)'</span>)
+plt.xlabel(<span style="font-style: italic;">'A&#241;o'</span>)
+plt.ylabel(<span style="font-style: italic;">'N&#250;mero de denuncias'</span>)
+plt.grid(axis=<span style="font-style: italic;">'y'</span>, alpha=0.4)
+fig.tight_layout()
+<span style="font-weight: bold; font-style: italic;">fname</span> = <span style="font-style: italic;">'./images/robo_domicilio_anual.png'</span>
+plt.savefig(fname)
+fname
+</pre>
+</div>
+
+
+<div id="org755461c" class="figure">
+<p><img src="./images/robo_domicilio_anual.png" alt="robo_domicilio_anual.png" />
+</p>
+</div>
+</div>
+</div>
+<div id="outline-container-orgaf90344" class="outline-3">
+<h3 id="orgaf90344"><span class="section-number-3">3.4.</span> Gráfico 2: Provincias con más denuncias en 2025</h3>
+<div class="outline-text-3" id="text-3-4">
+<div class="org-src-container">
+<pre class="src src-python"><span style="font-weight: bold; font-style: italic;">top10</span> = top_prov.sort_values(ascending=<span style="font-weight: bold; text-decoration: underline;">True</span>)  <span style="font-weight: bold; font-style: italic;"># </span><span style="font-weight: bold; font-style: italic;">barh ordena de abajo hacia arriba
+</span><span style="font-weight: bold; font-style: italic;">fig</span> = plt.figure(figsize=(9, 5.5))
+<span style="font-weight: bold; font-style: italic;">bars</span> = plt.barh(top10.index, top10.values, color=<span style="font-style: italic;">'#1e8449'</span>)
+plt.bar_label(bars, fontsize=9)
+plt.title(<span style="font-style: italic;">'Robo a domicilio: 10 provincias con m&#225;s denuncias (2025)'</span>)
+plt.xlabel(<span style="font-style: italic;">'N&#250;mero de denuncias'</span>)
+plt.grid(axis=<span style="font-style: italic;">'x'</span>, alpha=0.4)
+fig.tight_layout()
+<span style="font-weight: bold; font-style: italic;">fname</span> = <span style="font-style: italic;">'./images/robo_domicilio_provincias.png'</span>
+plt.savefig(fname)
+fname
+</pre>
+</div>
+
+
+<div id="org4382c31" class="figure">
+<p><img src="./images/robo_domicilio_provincias.png" alt="robo_domicilio_provincias.png" />
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="outline-container-orgb6f9373" class="outline-2">
+<h2 id="orgb6f9373"><span class="section-number-2">4.</span> Interpretación de resultados</h2>
+<div class="outline-text-2" id="text-4">
+<p>
+Del procesamiento de los datos se destacan tres hallazgos:
+</p>
+
+<ol class="org-ol">
+<li><b>Tendencia decreciente sostenida:</b> las denuncias de robo a
+domicilio a nivel nacional pasaron de 19.347 en 2015 (año pico de
+la serie) a 4.407 en 2025, una reducción acumulada de
+aproximadamente el 77%. La caída más pronunciada ocurre en 2020
+(7.369 denuncias), año de las restricciones de movilidad por la
+pandemia, con un repunte parcial en 2021-2022 y nuevos descensos
+desde 2023.</li>
+
+<li><b>Continuidad de la tendencia en 2026:</b> el acumulado enero-febrero
+2026 (630 denuncias) es 12,6% menor al del mismo período de 2025
+(721), consistente con la variación reportada oficialmente por el
+INEC.</li>
+
+<li><b>Concentración territorial:</b> Guayas (1.142) y Pichincha (959)
+concentran cerca de la mitad de las denuncias de 2025, lo cual es
+coherente con su peso poblacional; los cantones Quito (808) y
+Guayaquil (696) encabezan el detalle cantonal.</li>
+</ol>
+
+<p>
+<b>Limitación metodológica:</b> la fuente registra <i>denuncias</i> ante la
+Fiscalía General del Estado (SIAF), no hechos ocurridos; parte de la
+disminución podría estar influida por cambios en la propensión a
+denunciar. Además, los datos del INEC están "sujetos a variación"
+según el corte de información.
+</p>
+</div>
+</div>
+<div id="outline-container-org17cd7d0" class="outline-2">
+<h2 id="org17cd7d0"><span class="section-number-2">5.</span> Referencias</h2>
+<div class="outline-text-2" id="text-5">
+<ul class="org-ul">
+<li><a href="https://www.ecuadorencifras.gob.ec/justicia-y-crimen/">INEC - Estadísticas de Justicia y Crimen: Delitos de mayor connotación</a></li>
+<li>INEC (2026). <i>Presentación de principales resultados Estadísticas de
+Seguridad Integral - Febrero 2026</i>. Quito.</li>
+<li><a href="https://www.fiscalia.gob.ec/analitica/">Fiscalía General del Estado - Analítica (SIAF)</a></li>
+<li><a href="https://pandas.pydata.org/docs/reference/api/pandas.read_excel.html">pandas.read<sub>excel</sub> - Documentación oficial</a></li>
+<li><a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.barh.html">matplotlib barh - Documentación oficial</a></li>
+<li><a href="https://emacs.stackexchange.com/questions/28715/get-pandas-data-frame-as-a-table-in-org-babel">Presentar DataFrame como tabla en org-babel</a></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Fecha: 2026-07-14</p>
+<p class="author">Autor: Grupo 3</p>
+<p class="date">Created: 2026-07-14 Tue 19:39</p>
+</div>
+</body>
+</html>
